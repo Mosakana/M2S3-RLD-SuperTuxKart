@@ -1,27 +1,37 @@
-import gymnasium as gym
+from pathlib import Path
 from pystk2_gymnasium import AgentSpec
+from functools import partial
+import torch
+import inspect
+from bbrl.agents.gymnasium import ParallelGymAgent, make_env
 
+# Note the use of relative imports
+from .actors import SB3PolicyActor
+from .pystk_actor import env_name, get_wrappers, player_name
+from stable_baselines3 import A2C
 
+if __name__ == "__main__":
+    # Setup the environment
+    make_stkenv = partial(
+        make_env,
+        env_name,
+        wrappers=get_wrappers(),
+        render_mode=None,
+        autoreset=True,
+        agent=AgentSpec(use_ai=False, name=player_name),
+    )
 
-# STK gymnasium uses one process
-if __name__ == '__main__':
-  # Use a a flattened version of the observation and action spaces
-  # In both case, this corresponds to a dictionary with two keys:
-  # - `continuous` is a vector corresponding to the continuous observations
-  # - `discrete` is a vector (of integers) corresponding to discrete observations
-  env = gym.make("supertuxkart/full-v0", render_mode="human", agent=AgentSpec(use_ai=False))
+    env_agent = ParallelGymAgent(make_stkenv, 1)
+    env = env_agent.envs[0]
 
-  ix = 0
-  done = False
-  state, *_ = env.reset()
+    # (2) Learn
 
-  ix += 1
-  action = env.action_space.sample()
-  state, reward, terminated, truncated, _ = env.step(action)
+    model = A2C("MultiInputPolicy", env, verbose=1)
+    model.learn(total_timesteps=100000)
+    policy = model.policy
 
-  done = truncated or terminated
-  print(state)
-  print(type(state))
-
-  # Important to stop the STK process
-  env.close()
+    # (3) Save the actor sate
+    sb3_actor = SB3PolicyActor(model)
+    mod_path = Path(inspect.getfile(get_wrappers)).parent
+    torch.save(sb3_actor.state_dict(), mod_path / "pystk_actor.pth")
+    model.save(mod_path / "model.zip")
