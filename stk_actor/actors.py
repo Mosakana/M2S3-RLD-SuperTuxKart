@@ -69,6 +69,7 @@ class MultiDiscreteToBoxWrapper(gym.ActionWrapper):
             val_int = int(np.floor(val))
             val_int = np.clip(val_int, 0, self.nvec[i] - 1)
             discrete_action.append(val_int)
+
         return np.array(discrete_action, dtype=np.int64)
 
 
@@ -86,20 +87,19 @@ class SB3PolicyActor(Agent):
         self.deterministic = deterministic
 
     def forward(self, t, **kwargs):
-        obs = self.get(("env/env_obs", t))
+        obs_d = self.get(("env/env_obs/discrete", t))
+        obs_c = self.get(("env/env_obs/continuous", t))
 
-        if not isinstance(obs, torch.Tensor):
-            obs = torch.tensor(obs, dtype=torch.float32)
-
-        if len(obs.shape) == 1:
-            obs = obs.unsqueeze(0)
+        obs = {
+            'discrete': obs_d,
+            'continuous': obs_c
+        }
 
         actions, _ = self.sb3_policy.predict(obs, deterministic=self.deterministic)
 
-        actions = torch.tensor(actions, dtype=torch.float32)
+        print(actions)
 
-        if actions.shape[0] == 1:
-            actions = actions.squeeze(0)
+        actions = torch.tensor(actions, dtype=torch.float32)
 
         self.set(("action", t), actions)
 

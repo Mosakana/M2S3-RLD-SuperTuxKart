@@ -1,7 +1,7 @@
 from typing import List, Callable
 from bbrl.agents import Agents, Agent
 import gymnasium as gym
-from stable_baselines3 import A2C
+from stable_baselines3 import SAC, PPO
 import inspect
 from pathlib import Path
 
@@ -19,16 +19,18 @@ player_name = "Example"
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
-    if len(state) == 0:
-        return SamplingActor(action_space)
-
+    # if state is None:
+    #     return SamplingActor(action_space)
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    model = A2C.load(mod_path / "model.zip")
+    model = SAC.load(mod_path / "model.zip")
 
     actor = SB3PolicyActor(model.policy, deterministic=False)
-    return Agents(actor, ArgmaxActor())
+    # actor.sb3_policy.load_state_dict(state)
+    argmax_actor = SB3PolicyActor(model.policy, deterministic=True)
+    # argmax_actor.sb3_policy.load_state_dict(state)
+    return Agents(actor, argmax_actor)
 
 
 def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:

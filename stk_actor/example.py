@@ -1,6 +1,7 @@
 import gymnasium as gym
 from pystk2_gymnasium import AgentSpec
-
+import torch
+from stable_baselines3 import SAC, PPO
 
 
 # STK gymnasium uses one process
@@ -20,9 +21,11 @@ if __name__ == '__main__':
   state, reward, terminated, truncated, _ = env.step(action)
 
   done = truncated or terminated
-  print(state)
-  print(state['continuous'].shape)
-  print(env.observation_space['discrete'].nvec)
+
+  model = SAC.load("./model.zip")
+
+  print(model.policy.net_arch)
+
 
   # Important to stop the STK process
   env.close()
