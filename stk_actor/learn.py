@@ -27,7 +27,9 @@ if __name__ == "__main__":
 
     env = make_vec_env(make_stkenv, n_envs=4)
 
-    eval_env = gym.make(make_stkenv)
+    eval_env = ParallelGymAgent(make_stkenv, 1)
+
+    eval_env = eval_env.envs[0]
 
     eval_callback = EvalCallback(eval_env, best_model_save_path="./logs/",
                              log_path="./logs/", eval_freq=5000,
@@ -37,16 +39,16 @@ if __name__ == "__main__":
 
     policy_kwargs = dict(
         net_arch=dict(
-            pi=[256, 256],   
-            qf=[256, 256],   
+            pi=[256, 256],
+            qf=[256, 256],
         ),
     )
 
-    model = TQC("MultiInputPolicy", env, device='cuda', verbose=1, callback=eval_callback,
+    model = TQC("MultiInputPolicy", env, device='cuda', verbose=1,
                  tensorboard_log='./tensorboard_logs/', learning_rate=3e-4, batch_size=256, buffer_size=10_000,
                  gamma=0.99, tau=0.005, ent_coef='auto', policy_kwargs=policy_kwargs
     )
-    model.learn(total_timesteps=60_000)
+    model.learn(total_timesteps=2_000_000, callback=eval_callback)
     policy = model.policy
 
     # (3) Save the actor sate
