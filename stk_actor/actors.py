@@ -97,8 +97,6 @@ class SB3PolicyActor(Agent):
 
         actions, _ = self.sb3_policy.predict(obs, deterministic=self.deterministic)
 
-        print(actions)
-
         actions = torch.tensor(actions, dtype=torch.float32)
 
         self.set(("action", t), actions)

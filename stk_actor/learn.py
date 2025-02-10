@@ -1,3 +1,4 @@
+import gymnasium as gym
 from pathlib import Path
 from pystk2_gymnasium import AgentSpec
 from functools import partial
@@ -9,7 +10,9 @@ from bbrl.agents.gymnasium import ParallelGymAgent, make_env
 from .actors import SB3PolicyActor
 from .pystk_actor import env_name, get_wrappers, player_name
 from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
+from sb3_contrib import TQC
 
 if __name__ == "__main__":
     # Setup the environment
@@ -23,6 +26,13 @@ if __name__ == "__main__":
     )
 
     env = make_vec_env(make_stkenv, n_envs=4)
+
+    eval_env = gym.make(make_stkenv)
+
+    eval_callback = EvalCallback(eval_env, best_model_save_path="./logs/",
+                             log_path="./logs/", eval_freq=5000,
+                             deterministic=True, render=False)
+
     # (2) Learn
 
     policy_kwargs = dict(
@@ -32,11 +42,11 @@ if __name__ == "__main__":
         ),
     )
 
-    model = SAC("MultiInputPolicy", env, device='cuda', verbose=1,
+    model = TQC("MultiInputPolicy", env, device='cuda', verbose=1, callback=eval_callback,
                  tensorboard_log='./tensorboard_logs/', learning_rate=3e-4, batch_size=256, buffer_size=10_000,
                  gamma=0.99, tau=0.005, ent_coef='auto', policy_kwargs=policy_kwargs
     )
-    model.learn(total_timesteps=6_000_000)
+    model.learn(total_timesteps=60_000)
     policy = model.policy
 
     # (3) Save the actor sate
