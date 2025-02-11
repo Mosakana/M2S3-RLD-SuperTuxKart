@@ -72,6 +72,78 @@ class MultiDiscreteToBoxWrapper(gym.ActionWrapper):
 
         return np.array(discrete_action, dtype=np.int64)
 
+    # def __init__(self, env):
+    #     super().__init__(env)
+    #     self.env = env
+
+    #     self.cont_box = env.action_space.spaces['continuous']
+    #     self.md = env.action_space.spaces['discrete']      
+    #     assert isinstance(self.cont_box, gym.spaces.Box)
+    #     assert isinstance(self.md, gym.spaces.MultiDiscrete)
+
+    #     self.cont_dim = self.cont_box.shape[0]  
+    #     self.cont_low = self.cont_box.low       
+    #     self.cont_high = self.cont_box.high    
+
+    #     self.nvec = self.md.nvec               
+    #     self.md_dim = len(self.nvec)           
+
+    #     self.low = np.concatenate([
+    #         self.cont_low,          
+    #         np.zeros((self.md_dim,), dtype=np.float32)
+    #     ]).astype(np.float32)
+
+    #     self.high = np.concatenate([
+    #         self.cont_high,
+    #         np.ones((self.md_dim,), dtype=np.float32)
+    #     ]).astype(np.float32)
+
+    #     self.action_space = gym.spaces.Box(
+    #         low=self.low,
+    #         high=self.high,
+    #         shape=(self.cont_dim + self.md_dim,),
+    #         dtype=np.float32
+    #     )
+
+    # def action(self, box_act):
+    #     cont_part = box_act[:self.cont_dim]
+    #     cont_part = np.clip(cont_part, self.cont_low, self.cont_high)
+
+    #     md_part = box_act[self.cont_dim:]
+    #     discrete_vals = []
+    #     for i, n in enumerate(self.nvec):
+    #         val_float = md_part[i]
+    #         val_float = np.clip(val_float, 0.0, 1.0)
+    #         val_int = int(np.floor(val_float * n))
+    #         val_int = np.clip(val_int, 0, n-1)
+    #         discrete_vals.append(val_int)
+    #     discrete_vals = np.array(discrete_vals, dtype=np.int64)
+
+    #     return {
+    #         'discrete': discrete_vals,
+    #         'continuous': cont_part
+    #     }
+
+class FixedActionWrapper(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        original_md = env.action_space
+        assert isinstance(original_md, gym.spaces.MultiDiscrete)
+        assert (original_md.nvec == np.array([5, 2, 2, 2, 2, 2, 7])).all()
+
+        self.action_space = gym.spaces.MultiDiscrete([2, 7])
+
+
+        self.fixed_action_template = np.array([4, 0, 0, 1, 1, 0, 0], dtype=np.int64)
+                        #                     ^  ^  ^  ^  ^  ^  ^
+                        #     idx:            0  1  2  3  4  5  6
+                        #   meaning:    accel  br  dr ft ni  re  st
+
+    def action(self, act):
+        full_action = self.fixed_action_template.copy()
+        full_action[2] = act[0]  # drift
+        full_action[6] = act[1]  # steer
+        return full_action
 
 class Actor(Agent):
     """Computes probabilities over action"""

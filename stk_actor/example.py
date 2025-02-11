@@ -2,6 +2,7 @@ import gymnasium as gym
 from pystk2_gymnasium import AgentSpec
 import torch
 from stable_baselines3 import SAC, PPO
+from sb3_contrib import TQC
 
 
 # STK gymnasium uses one process
@@ -22,9 +23,14 @@ if __name__ == '__main__':
 
   done = truncated or terminated
 
-  model = SAC.load("./model.zip")
+  # model = TQC.load("./model.zip")
 
-  print(model.policy.net_arch)
+  # torch.save(model.policy.state_dict(), "pystk_actor.pth")
+
+  print(env.action_space)
+  print(env.observation_space)
+  print(action)
+
 
 
   # Important to stop the STK process
