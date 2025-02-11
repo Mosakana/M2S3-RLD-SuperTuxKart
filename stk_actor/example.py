@@ -11,7 +11,7 @@ if __name__ == '__main__':
   # In both case, this corresponds to a dictionary with two keys:
   # - `continuous` is a vector corresponding to the continuous observations
   # - `discrete` is a vector (of integers) corresponding to discrete observations
-  env = gym.make("supertuxkart/flattened_multidiscrete-v0", render_mode="human", agent=AgentSpec(use_ai=False))
+  env = gym.make("supertuxkart/flattened-v0", render_mode="human", agent=AgentSpec(use_ai=False))
 
   ix = 0
   done = False

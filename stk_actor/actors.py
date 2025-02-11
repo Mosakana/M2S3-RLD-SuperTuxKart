@@ -72,57 +72,55 @@ class MultiDiscreteToBoxWrapper(gym.ActionWrapper):
 
         return np.array(discrete_action, dtype=np.int64)
 
-    # def __init__(self, env):
-    #     super().__init__(env)
-    #     self.env = env
+class FixDictActionWrapper(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.fire_state = 0
 
-    #     self.cont_box = env.action_space.spaces['continuous']
-    #     self.md = env.action_space.spaces['discrete']      
-    #     assert isinstance(self.cont_box, gym.spaces.Box)
-    #     assert isinstance(self.md, gym.spaces.MultiDiscrete)
+        assert isinstance(env.action_space, gym.spaces.Dict), \
+            "Expecting a Dict action space."
+        assert 'continuous' in env.action_space.spaces and 'discrete' in env.action_space.spaces, \
+            "Must have 'continuous' and 'discrete' keys."
+        cont_space = env.action_space.spaces['continuous']
+        disc_space = env.action_space.spaces['discrete']
+        assert isinstance(cont_space, gym.spaces.Box)
+        assert isinstance(disc_space, gym.spaces.MultiDiscrete)
 
-    #     self.cont_dim = self.cont_box.shape[0]  
-    #     self.cont_low = self.cont_box.low       
-    #     self.cont_high = self.cont_box.high    
+        low = np.array([-1.0, 0.0], dtype=np.float32)
+        high = np.array([ 1.0, 1.0], dtype=np.float32)
+        self.action_space = gym.spaces.Box(
+            low=low,
+            high=high,
+            shape=(2,),
+            dtype=np.float32
+        )
 
-    #     self.nvec = self.md.nvec               
-    #     self.md_dim = len(self.nvec)           
+    def action(self, box_act):
+        steer = box_act[0]
+        drift_float = box_act[1]
 
-    #     self.low = np.concatenate([
-    #         self.cont_low,          
-    #         np.zeros((self.md_dim,), dtype=np.float32)
-    #     ]).astype(np.float32)
+        if drift_float >= 0.5:
+            drift = 1
+        else:
+            drift = 0
 
-    #     self.high = np.concatenate([
-    #         self.cont_high,
-    #         np.ones((self.md_dim,), dtype=np.float32)
-    #     ]).astype(np.float32)
+        if self.fire_state == 0:
+            self.fire_state = 1
+        else:
+            self.fire_state = 0
 
-    #     self.action_space = gym.spaces.Box(
-    #         low=self.low,
-    #         high=self.high,
-    #         shape=(self.cont_dim + self.md_dim,),
-    #         dtype=np.float32
-    #     )
+        original_cont = np.array([1.0, steer], dtype=np.float32)  # acceleration=1, steer=? 
 
-    # def action(self, box_act):
-    #     cont_part = box_act[:self.cont_dim]
-    #     cont_part = np.clip(cont_part, self.cont_low, self.cont_high)
+        # discrete
+        # brake=0, drift=?, fire=1 -0 - 1, nitro=1, rescue=0
+        original_disc = np.array([0, drift, self.fire_state, 1, 0], dtype=np.int64)
 
-    #     md_part = box_act[self.cont_dim:]
-    #     discrete_vals = []
-    #     for i, n in enumerate(self.nvec):
-    #         val_float = md_part[i]
-    #         val_float = np.clip(val_float, 0.0, 1.0)
-    #         val_int = int(np.floor(val_float * n))
-    #         val_int = np.clip(val_int, 0, n-1)
-    #         discrete_vals.append(val_int)
-    #     discrete_vals = np.array(discrete_vals, dtype=np.int64)
+        original_action = {
+            'continuous': original_cont,
+            'discrete': original_disc
+        }
 
-    #     return {
-    #         'discrete': discrete_vals,
-    #         'continuous': cont_part
-    #     }
+        return original_action
 
 class FixedActionWrapper(gym.ActionWrapper):
     def __init__(self, env):
@@ -143,6 +141,7 @@ class FixedActionWrapper(gym.ActionWrapper):
         full_action = self.fixed_action_template.copy()
         full_action[2] = act[0]  # drift
         full_action[6] = act[1]  # steer
+        print(full_action)
         return full_action
 
 class Actor(Agent):

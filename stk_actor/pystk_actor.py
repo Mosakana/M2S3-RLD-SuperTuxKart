@@ -9,10 +9,10 @@ from sb3_contrib.tqc.policies import MultiInputPolicy
 
 # Imports our Actor class
 # IMPORTANT: note the relative import
-from .actors import Actor, SB3PolicyActor, ArgmaxActor, SamplingActor, DictObsToBoxWrapper, MultiDiscreteToBoxWrapper, FixedActionWrapper
+from .actors import Actor, SB3PolicyActor, ArgmaxActor, SamplingActor, DictObsToBoxWrapper, MultiDiscreteToBoxWrapper, FixDictActionWrapper
 
 #: The base environment name
-env_name = "supertuxkart/flattened_multidiscrete-v0"
+env_name = "supertuxkart/flattened-v0"
 
 #: Player name
 player_name = "Example"
@@ -21,21 +21,16 @@ player_name = "Example"
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
-    if state is None:
-        return SamplingActor(action_space)
+    # if state is None:
+    #     return SamplingActor(action_space)
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    policy = MultiInputPolicy(observation_space, action_space, lr_schedule=lambda x: 0.0, net_arch=dict(
-            pi=[256, 256],   
-            qf=[256, 256],   
-        ))
-    
-    policy.load_state_dict(state)
+    model = TQC.load(mod_path / 'model.zip')
 
-    actor = SB3PolicyActor(policy, deterministic=False)
+    actor = SB3PolicyActor(model.policy, deterministic=False)
     # actor.sb3_policy.load_state_dict(state)
-    argmax_actor = SB3PolicyActor(policy, deterministic=True)
+    argmax_actor = SB3PolicyActor(model.policy, deterministic=True)
     # argmax_actor.sb3_policy.load_state_dict(state)
     return Agents(actor, argmax_actor)
 
@@ -45,6 +40,5 @@ def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     environment"""
     return [
         lambda env: DictObsToBoxWrapper(env),
-        lambda env: FixedActionWrapper(env),
-        lambda env: MultiDiscreteToBoxWrapper(env)
+        lambda env: FixDictActionWrapper(env),
     ]
