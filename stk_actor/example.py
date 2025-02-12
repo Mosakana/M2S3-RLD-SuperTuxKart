@@ -26,6 +26,7 @@ if __name__ == '__main__':
   # model = TQC.load("./model.zip")
 
   # torch.save(model.policy.state_dict(), "pystk_actor.pth")
+  print(env.TRACKS)
 
   print(env.action_space)
   print(env.observation_space)
