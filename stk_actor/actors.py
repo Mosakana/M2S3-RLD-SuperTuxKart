@@ -119,6 +119,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
             'continuous': original_cont,
             'discrete': original_disc
         }
+        print(original_action)
 
         return original_action
 

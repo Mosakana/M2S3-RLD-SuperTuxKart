@@ -15,7 +15,7 @@ from .actors import Actor, SB3PolicyActor, ArgmaxActor, SamplingActor, DictObsTo
 env_name = "supertuxkart/flattened-v0"
 
 #: Player name
-player_name = "Example"
+player_name = "Winux"
 
 
 def get_actor(
