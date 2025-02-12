@@ -2,7 +2,7 @@ from typing import List, Callable
 from bbrl.agents import Agents, Agent
 import gymnasium as gym
 from stable_baselines3 import SAC, PPO
-from sb3_contrib import TQC
+# from sb3_contrib import TQC
 import inspect
 from pathlib import Path
 from sb3_contrib.tqc.policies import MultiInputPolicy
@@ -26,7 +26,7 @@ def get_actor(
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    model = TQC.load(mod_path / 'model.zip')
+    model = SAC.load(mod_path / 'model.zip')
 
     actor = SB3PolicyActor(model.policy, deterministic=False)
     # actor.sb3_policy.load_state_dict(state)
