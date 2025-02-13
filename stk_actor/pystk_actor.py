@@ -1,13 +1,15 @@
 from typing import List, Callable
 from bbrl.agents import Agents, Agent
 import gymnasium as gym
-from stable_baselines3 import SAC, PPO
+
 import inspect
 from pathlib import Path
 
 # Imports our Actor class
 # IMPORTANT: note the relative import
 from .actors import SB3PolicyActor, DictObsToBoxWrapper, FixDictActionWrapper, DriftRewardWrapper
+from stable_baselines3 import SAC
+from stable_baselines3.sac import MultiInputPolicy
 
 #: The base environment name
 env_name = "supertuxkart/flattened-v0"
@@ -24,7 +26,7 @@ def get_actor(
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    model = SAC.load(mod_path / 'test.zip')
+    model = SAC.load(mod_path / 'model')
 
     actor = SB3PolicyActor(model.policy, deterministic=False)
     # actor.sb3_policy.load_state_dict(state)
