@@ -119,7 +119,6 @@ class FixDictActionWrapper(gym.ActionWrapper):
             'continuous': original_cont,
             'discrete': original_disc
         }
-        print(original_action)
 
         return original_action
 
@@ -145,12 +144,20 @@ class FixedActionWrapper(gym.ActionWrapper):
         print(full_action)
         return full_action
 
-class Actor(Agent):
-    """Computes probabilities over action"""
+class DriftRewardWrapper(gym.Wrapper):
+    def __init__(self, env, drift_bonus=0.1, drift_threshold=0.5):
+        super(DriftRewardWrapper, self).__init__(env)
+        self.drift_bonus = drift_bonus
+        self.drift_threshold = drift_threshold
 
-    def forward(self, t: int):
-        # Computes probabilities over actions
-        pass
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        drift_value = action[1]
+
+        if drift_value > self.drift_threshold:
+            reward += self.drift_bonus
+
+        return obs, reward, terminated, truncated, info
 
 class SB3PolicyActor(Agent):
     def __init__(self, sb3_policy, deterministic=False):
@@ -172,13 +179,6 @@ class SB3PolicyActor(Agent):
         actions = torch.tensor(actions, dtype=torch.float32)
 
         self.set(("action", t), actions)
-
-class ArgmaxActor(Agent):
-    """Actor that computes the action"""
-
-    def forward(self, t: int):
-        # Selects the best actions according to the policy
-        pass
 
 
 class SamplingActor(Agent):

@@ -27,7 +27,7 @@ if __name__ == "__main__":
         agent=AgentSpec(use_ai=False, name=player_name),
     )
 
-    env = make_vec_env(make_stkenv, n_envs=8)
+    env = make_vec_env(make_stkenv, n_envs=16)
 
     n_actions = env.action_space.shape[-1]
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
                  gamma=0.99, ent_coef='auto',
                  tau=0.005,  buffer_size=10_000, policy_kwargs=policy_kwargs
     )
-    model.learn(total_timesteps=2_000_000, callback=event_callback)
+    model.learn(total_timesteps=1_000_000, callback=event_callback)
     policy = model.policy
 
     # (3) Save the actor sate

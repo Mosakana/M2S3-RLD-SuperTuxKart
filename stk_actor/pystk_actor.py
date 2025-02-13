@@ -9,7 +9,7 @@ from sb3_contrib.tqc.policies import MultiInputPolicy
 
 # Imports our Actor class
 # IMPORTANT: note the relative import
-from .actors import Actor, SB3PolicyActor, ArgmaxActor, SamplingActor, DictObsToBoxWrapper, MultiDiscreteToBoxWrapper, FixDictActionWrapper
+from .actors import SB3PolicyActor, DictObsToBoxWrapper, FixDictActionWrapper, DriftRewardWrapper
 
 #: The base environment name
 env_name = "supertuxkart/flattened-v0"
@@ -41,4 +41,5 @@ def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     return [
         lambda env: DictObsToBoxWrapper(env),
         lambda env: FixDictActionWrapper(env),
+        lambda env: DriftRewardWrapper(env, drift_bonus=0.05)
     ]
