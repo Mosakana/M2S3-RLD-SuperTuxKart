@@ -29,6 +29,7 @@ if __name__ == "__main__":
 
     env = make_vec_env(make_stkenv, n_envs=16)
 
+    mod_path = Path(inspect.getfile(get_wrappers)).parent
     n_actions = env.action_space.shape[-1]
 
     # action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
@@ -45,17 +46,25 @@ if __name__ == "__main__":
             qf=[256, 256, 128, 128],   
         ),
     )
+    
+    checkpoint_path = Path(mod_path / 'check_point.zip')
 
-    model = TQC("MultiInputPolicy", env, device='cuda', verbose=1,
-                 tensorboard_log='./tensorboard_logs/', learning_rate=3e-4, batch_size=256,
-                 gamma=0.99, ent_coef='auto',
-                 tau=0.005,  buffer_size=10_000, policy_kwargs=policy_kwargs
-    )
+    if checkpoint_path.exists():
+        print('load check point')
+        model = TQC.load(checkpoint_path, env)
+
+    else:
+        model = TQC("MultiInputPolicy", env, device='cuda', verbose=1,
+                    tensorboard_log='./tensorboard_logs/', learning_rate=3e-4, batch_size=256,
+                    gamma=0.99, ent_coef='auto',
+                    tau=0.005,  buffer_size=10_000, policy_kwargs=policy_kwargs
+        )
+
     model.learn(total_timesteps=1_000_000, callback=event_callback)
     policy = model.policy
 
     # (3) Save the actor sate
     sb3_actor = SB3PolicyActor(model)
-    mod_path = Path(inspect.getfile(get_wrappers)).parent
+
     torch.save(policy.state_dict(), mod_path / "pystk_actor.pth")
     model.save(mod_path / "model.zip")

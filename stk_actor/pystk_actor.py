@@ -2,10 +2,8 @@ from typing import List, Callable
 from bbrl.agents import Agents, Agent
 import gymnasium as gym
 from stable_baselines3 import SAC, PPO
-# from sb3_contrib import TQC
 import inspect
 from pathlib import Path
-from sb3_contrib.tqc.policies import MultiInputPolicy
 
 # Imports our Actor class
 # IMPORTANT: note the relative import
@@ -26,7 +24,7 @@ def get_actor(
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
 
-    model = SAC.load(mod_path / 'model.zip')
+    model = SAC.load(mod_path / 'test.zip')
 
     actor = SB3PolicyActor(model.policy, deterministic=False)
     # actor.sb3_policy.load_state_dict(state)
@@ -39,7 +37,7 @@ def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
     """Returns a list of additional wrappers to be applied to the base
     environment"""
     return [
+        # lambda env: DriftRewardWrapper(env, drift_bonus=0.05),
         lambda env: DictObsToBoxWrapper(env),
         lambda env: FixDictActionWrapper(env),
-        lambda env: DriftRewardWrapper(env, drift_bonus=0.05)
     ]

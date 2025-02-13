@@ -99,7 +99,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
         steer = box_act[0]
         drift_float = box_act[1]
 
-        if drift_float >= 0.5:
+        if drift_float >= 0.5 and abs(steer) >= 0.5:
             drift = 1
         else:
             drift = 0
@@ -120,6 +120,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
             'discrete': original_disc
         }
 
+        print(original_action)
         return original_action
 
 class FixedActionWrapper(gym.ActionWrapper):
@@ -152,9 +153,10 @@ class DriftRewardWrapper(gym.Wrapper):
 
     def step(self, action):
         obs, reward, terminated, truncated, info = self.env.step(action)
-        drift_value = action[1]
+        drift_value = action['discrete'][1]
+        steer_value = action['continuous'][1]
 
-        if drift_value > self.drift_threshold:
+        if drift_value > self.drift_threshold and abs(steer_value) >= 0.5:
             reward += self.drift_bonus
 
         return obs, reward, terminated, truncated, info
