@@ -23,14 +23,14 @@ if __name__ == '__main__':
 
   done = truncated or terminated
 
-  # model = TQC.load("./model.zip")
+  model = SAC.load("./model.zip")
 
-  # torch.save(model.policy.state_dict(), "pystk_actor.pth")
-  print(env.TRACKS)
+  torch.save(model.policy.state_dict(), "./pystk_actor.pth")
+  # print(env.TRACKS)
 
-  print(env.action_space)
-  print(env.observation_space)
-  print(action)
+  # print(env.action_space)
+  # print(env.observation_space)
+  # print(action)
 
 
 

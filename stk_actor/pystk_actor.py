@@ -9,7 +9,7 @@ from pathlib import Path
 # IMPORTANT: note the relative import
 from .actors import SB3PolicyActor, DictObsToBoxWrapper, FixDictActionWrapper, DriftRewardWrapper
 from stable_baselines3 import SAC
-from stable_baselines3.sac import MultiInputPolicy
+from .tqc_policy import MultiInputPolicy
 
 #: The base environment name
 env_name = "supertuxkart/flattened-v0"
@@ -21,17 +21,20 @@ player_name = "Winux"
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
-    # if state is None:
-    #     return SamplingActor(action_space)
+    if state and len(state) != 0:
+        policy = MultiInputPolicy(observation_space, action_space, lr_schedule=lambda x: 0.0, net_arch=dict(
+            pi=[256, 256, 128, 128],
+            qf=[256, 256, 128, 128]
+        ))
+        
+        policy.load_state_dict(state)
+    else:
+        mod_path = Path(inspect.getfile(get_wrappers)).parent
+        model = SAC.load(mod_path / 'model')
+        policy = model.policy
 
-    mod_path = Path(inspect.getfile(get_wrappers)).parent
-
-    model = SAC.load(mod_path / 'model')
-
-    actor = SB3PolicyActor(model.policy, deterministic=False)
-    # actor.sb3_policy.load_state_dict(state)
-    argmax_actor = SB3PolicyActor(model.policy, deterministic=True)
-    # argmax_actor.sb3_policy.load_state_dict(state)
+    actor = SB3PolicyActor(policy, deterministic=False)
+    argmax_actor = SB3PolicyActor(policy, deterministic=True)
     return Agents(actor, argmax_actor)
 
 
