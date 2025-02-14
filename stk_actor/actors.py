@@ -142,7 +142,6 @@ class FixedActionWrapper(gym.ActionWrapper):
         full_action = self.fixed_action_template.copy()
         full_action[2] = act[0]  # drift
         full_action[6] = act[1]  # steer
-        print(full_action)
         return full_action
 
 class DriftRewardWrapper(gym.Wrapper):

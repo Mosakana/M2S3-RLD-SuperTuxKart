@@ -1,6 +1,8 @@
 import gymnasium as gym
 import numpy as np
 from pathlib import Path
+
+from numpy.ma.core import masked
 from pystk2_gymnasium import AgentSpec
 from functools import partial
 import torch
@@ -8,26 +10,38 @@ import inspect
 from bbrl.agents.gymnasium import ParallelGymAgent, make_env
 
 # Note the use of relative imports
-from .actors import SB3PolicyActor
 from .pystk_actor import env_name, get_wrappers, player_name
+from .actors import SB3PolicyActor, DictObsToBoxWrapper, FixDictActionWrapper, DriftRewardWrapper
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, EveryNTimesteps
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.noise import NormalActionNoise
 from sb3_contrib import TQC, TRPO, RecurrentPPO
+from stable_baselines3.common.monitor import Monitor
 
 if __name__ == "__main__":
     # Setup the environment
-    make_stkenv = partial(
-        make_env,
-        env_name,
-        wrappers=get_wrappers(),
-        render_mode=None,
-        autoreset=True,
-        agent=AgentSpec(use_ai=False, name=player_name),
-    )
+    TRACK = ['abyss', 'black_forest', 'candela_city',
+             'cocoa_temple', 'cornfield_crossing', 'fortmagma',
+             'gran_paradiso_island', 'hacienda', 'lighthouse',
+             'mines', 'minigolf','olivermath', 'ravenbridge_mansion',
+             'sandtrack', 'scotland', 'snowmountain', 'snowtuxpeak',
+             'stk_enterprise', 'volcano_island', 'xr591', 'zengarden']
 
-    env = make_vec_env(make_stkenv, n_envs=16)
+    def make_env(track):
+        def init():
+            return Monitor(FixDictActionWrapper(DictObsToBoxWrapper(DriftRewardWrapper(gym.make(
+                env_name,
+                track=track,
+                render_mode=None,
+                autoreset=True,
+                agent=AgentSpec(use_ai=False, name=player_name),)))))
+        return init
+
+    env_fns = [make_env(track) for track in TRACK]
+
+    env = DummyVecEnv(env_fns)
 
     mod_path = Path(inspect.getfile(get_wrappers)).parent
     n_actions = env.action_space.shape[-1]
