@@ -102,7 +102,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
 
         # discrete
         # brake=0, drift=?, fire=1->0->1, nitro=1, rescue=0
-        original_disc = np.array([0, drift, self.fire_state, 1, 0], dtype=np.int64)
+        original_disc = np.array([0, 0, self.fire_state, 1, 0], dtype=np.int64)
 
         original_action = {
             'continuous': original_cont,
