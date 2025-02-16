@@ -45,4 +45,5 @@ for i in range(1, 6):
 
     rewards.append((mean_reward, std_reward))
 
-print(rewards)
+for reward in rewards:
+    print(reward)
