@@ -35,10 +35,14 @@ env_fns = [make_env(track) for track in TRACK]
 
 env = DummyVecEnv(env_fns)
 
-model = TQC.load(mod_path / "model")
+rewards = []
 
+for i in range(1, 6):
 
-# 评估模型表现（运行10个episode，计算平均回报）
-mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10, deterministic=True)
+    model = TQC.load(mod_path / f"best_model{i}")
 
-print(mean_reward, std_reward)
+    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10, deterministic=True)
+
+    rewards.append((mean_reward, std_reward))
+
+print(rewards)
