@@ -2,17 +2,6 @@ import gymnasium as gym
 import numpy as np
 from bbrl.agents import Agent
 import torch
-from stable_baselines3.common.policies import ActorCriticPolicy
-
-
-class MyWrapper(gym.ActionWrapper):
-    def __init__(self, env, option: int):
-        super().__init__(env)
-        self.option = option
-
-    def action(self, action):
-        # We do nothing here
-        return action
 
 class DictObsToBoxWrapper(gym.ObservationWrapper):
     def __init__(self, env):
@@ -112,7 +101,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
         original_cont = np.array([1.0, steer], dtype=np.float32)  # acceleration=1, steer=? 
 
         # discrete
-        # brake=0, drift=?, fire=1 -0 - 1, nitro=1, rescue=0
+        # brake=0, drift=?, fire=1->0->1, nitro=1, rescue=0
         original_disc = np.array([0, drift, self.fire_state, 1, 0], dtype=np.int64)
 
         original_action = {
@@ -120,29 +109,7 @@ class FixDictActionWrapper(gym.ActionWrapper):
             'discrete': original_disc
         }
 
-        print(original_action)
         return original_action
-
-class FixedActionWrapper(gym.ActionWrapper):
-    def __init__(self, env):
-        super().__init__(env)
-        original_md = env.action_space
-        assert isinstance(original_md, gym.spaces.MultiDiscrete)
-        assert (original_md.nvec == np.array([5, 2, 2, 2, 2, 2, 7])).all()
-
-        self.action_space = gym.spaces.MultiDiscrete([2, 7])
-
-
-        self.fixed_action_template = np.array([4, 0, 0, 1, 1, 0, 0], dtype=np.int64)
-                        #                     ^  ^  ^  ^  ^  ^  ^
-                        #     idx:            0  1  2  3  4  5  6
-                        #   meaning:    accel  br  dr ft ni  re  st
-
-    def action(self, act):
-        full_action = self.fixed_action_template.copy()
-        full_action[2] = act[0]  # drift
-        full_action[6] = act[1]  # steer
-        return full_action
 
 class DriftRewardWrapper(gym.Wrapper):
     def __init__(self, env, drift_bonus=0.1, drift_threshold=0.5):
@@ -180,15 +147,3 @@ class SB3PolicyActor(Agent):
         actions = torch.tensor(actions, dtype=torch.float32)
 
         self.set(("action", t), actions)
-
-
-class SamplingActor(Agent):
-    """Samples random actions"""
-
-    def __init__(self, action_space: gym.Space):
-        super().__init__()
-        self.action_space = action_space
-
-    def forward(self, t: int):
-        sample = torch.tensor([self.action_space.sample()], dtype=torch.float32)
-        self.set(("action", t), sample)
